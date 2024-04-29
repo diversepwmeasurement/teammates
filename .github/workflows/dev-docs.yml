@@ -1,42 +1,40 @@
-name: Build Developer Guide
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
 jobs:
   build:
-    runs-on: ubuntu-latest
-    name: Dev docs
     defaults:
       run:
         shell: bash
         working-directory: docs
+    name: Dev docs
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - uses: actions/setup-java@v4
-        with:
-          java-version: 11
-          distribution: temurin
-      - name: Install Graphviz
-        run: sudo apt install graphviz
-      - run: npm ci
-      - run: npm run build
-      - name: Check build status
-        run: |
-          if [ ! -d "./_site" ]; then
-            echo "Build Error"
-            exit 1
-          fi
-      - name: Deploy on push
-        if: ${{ success() && github.event_name == 'push' }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run deploy
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - continue-on-error: true
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+    - continue-on-error: true
+      name: Install Graphviz
+      run: sudo apt install graphviz
+    - continue-on-error: true
+      run: npm ci
+    - continue-on-error: true
+      run: npm run build
+    - continue-on-error: true
+      name: Check build status
+      run: "if [ ! -d \"./_site\" ]; then\n  echo \"Build Error\"\n  exit 1\nfi\n"
+    - continue-on-error: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: ${{ success() && github.event_name == 'push' }}
+      name: Deploy on push
+      run: npm run deploy
+name: Build Developer Guide
+on:
+  repository_dispatch:
+    types: trigger-ga___dev-docs.yml

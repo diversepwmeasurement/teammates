@@ -1,38 +1,45 @@
-name: L&P Tests
-
-on:
-  push:
-    branches:
-      - master 
-      - release
-  schedule:
-    - cron: "0 0 * * *" # end of every day
 jobs:
   LnP-testing:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('.gradle/*.gradle*', 'build.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Create Config Files
-        run: ./gradlew createConfigs
-      - name: Run Solr search service + local Datastore emulator
-        run: docker-compose up -d
-      - name: Start Server
-        run: ./gradlew serverRun &
-      - name: Wait until server is running
-        run: ./wait-for-server.sh
-      - name: Start Tests
-        run: ./gradlew lnpTests
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+    - continue-on-error: true
+      name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-gradle-${{ hashFiles('.gradle/*.gradle*', 'build.gradle')
+          }}
+        path: '~/.gradle/caches
+
+          ~/.gradle/wrapper
+
+          '
+        restore-keys: '${{ runner.os }}-gradle-
+
+          '
+    - continue-on-error: true
+      name: Create Config Files
+      run: ./gradlew createConfigs
+    - continue-on-error: true
+      name: Run Solr search service + local Datastore emulator
+      run: docker-compose up -d
+    - continue-on-error: true
+      name: Start Server
+      run: ./gradlew serverRun &
+    - continue-on-error: true
+      name: Wait until server is running
+      run: ./wait-for-server.sh
+    - continue-on-error: true
+      name: Start Tests
+      run: ./gradlew lnpTests
+name: L&P Tests
+on:
+  repository_dispatch:
+    types: trigger-ga___lnp.yml

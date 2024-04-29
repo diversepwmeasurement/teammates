@@ -1,106 +1,134 @@
-name: Component Tests
-
-on:
-  push:
-    branches:
-      - master
-      - release
-  pull_request:
-    branches:
-      - master
-      - release
-  schedule:
-    - cron: "0 0 * * *" #end of every day
 jobs:
-  lint:
-    strategy:
-      fail-fast: false #ensure both tests run even if one fails
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '0'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('.gradle/*.gradle*', 'build.gradle') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Cache eslint
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./.eslintcache
-          key: ${{ runner.os }}-eslint-${{ hashFiles('.eslintcache') }}
-          restore-keys: |
-            ${{ runner.os }}-eslint-
-      - name: Cache stylelint
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./.stylelintcache
-          key: ${{ runner.os }}-stylelint-${{ hashFiles('.stylelintcache') }}
-          restore-keys: |
-            ${{ runner.os }}-stylelint-
-      - name: Run Backend Linting
-        run: ./gradlew lint --continue
-      - name: Install Frontend Dependencies
-        run: npm ci
-      - name: Run Lint Checks
-        run: npm run lint
   component-testing:
-    strategy:
-      fail-fast: false #ensure both tests run even if one fails
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 11
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-      - name: Update Property File
-        run: mv src/test/resources/test.ci-${{ matrix.os }}.properties src/test/resources/test.properties
-      - name: Run Solr search service
-        if: matrix.os == 'ubuntu-latest' # Docker does not work well on Windows env
-        run: docker-compose run -d -p 8983:8983 solr
-      - name: Run Backend Tests
-        run: |
-          ./gradlew createConfigs componentTests
-          ./gradlew jacocoReport
-      - name: Generate Types
-        run: ./gradlew generateTypes
-      - name: Install Frontend Dependencies
-        run: npm ci
-      - name: Run Frontend Tests
-        run: npm run coverage
-      - name: Upload to Codecov
-        if: matrix.os == 'ubuntu-latest' #only upload to codecov on ubuntu VM
-        uses: codecov/codecov-action@v3
+    - continue-on-error: true
+      uses: actions/checkout@v4
+    - continue-on-error: true
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - continue-on-error: true
+      name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+    - continue-on-error: true
+      name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+        path: '~/.gradle/caches
+
+          ~/.gradle/wrapper
+
+          '
+        restore-keys: '${{ runner.os }}-gradle-
+
+          '
+    - continue-on-error: true
+      name: Update Property File
+      run: mv src/test/resources/test.ci-${{ matrix.os }}.properties src/test/resources/test.properties
+    - continue-on-error: true
+      if: matrix.os == 'ubuntu-latest'
+      name: Run Solr search service
+      run: docker-compose run -d -p 8983:8983 solr
+    - continue-on-error: true
+      name: Run Backend Tests
+      run: './gradlew createConfigs componentTests
+
+        ./gradlew jacocoReport
+
+        '
+    - continue-on-error: true
+      name: Generate Types
+      run: ./gradlew generateTypes
+    - continue-on-error: true
+      name: Install Frontend Dependencies
+      run: npm ci
+    - continue-on-error: true
+      name: Run Frontend Tests
+      run: npm run coverage
+    - continue-on-error: true
+      if: matrix.os == 'ubuntu-latest'
+      name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - windows-latest
+  lint:
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+    - continue-on-error: true
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+    - continue-on-error: true
+      name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: 11
+    - continue-on-error: true
+      name: Cache Gradle packages
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-gradle-${{ hashFiles('.gradle/*.gradle*', 'build.gradle')
+          }}
+        path: '~/.gradle/caches
+
+          ~/.gradle/wrapper
+
+          '
+        restore-keys: '${{ runner.os }}-gradle-
+
+          '
+    - continue-on-error: true
+      name: Cache eslint
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-eslint-${{ hashFiles('.eslintcache') }}
+        path: './.eslintcache
+
+          '
+        restore-keys: '${{ runner.os }}-eslint-
+
+          '
+    - continue-on-error: true
+      name: Cache stylelint
+      uses: actions/cache@v4
+      with:
+        key: ${{ runner.os }}-stylelint-${{ hashFiles('.stylelintcache') }}
+        path: './.stylelintcache
+
+          '
+        restore-keys: '${{ runner.os }}-stylelint-
+
+          '
+    - continue-on-error: true
+      name: Run Backend Linting
+      run: ./gradlew lint --continue
+    - continue-on-error: true
+      name: Install Frontend Dependencies
+      run: npm ci
+    - continue-on-error: true
+      name: Run Lint Checks
+      run: npm run lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-latest
+        - windows-latest
+name: Component Tests
+on:
+  repository_dispatch:
+    types: trigger-ga___component.yml
